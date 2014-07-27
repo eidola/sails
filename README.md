@@ -1,0 +1,2 @@
+# eidolarecords
+### a Sails application
