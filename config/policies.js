@@ -23,10 +23,11 @@ module.exports.policies = {
 	'show': true,
 	'slug': true
     },
-    'releases': {
+    'release': {
 	'*': 'isAuthenticated',
 	'index': true,
 	'show': true,
+	'slug': true
     },
     'user':'isAuthenticated',
     /*

@@ -29,6 +29,7 @@
 module.exports.routes = {
     
     'get /artist/:slug' : 'ArtistController.slug',
+    'get /release/:slug' : 'ReleaseController.slug',
     // By default, your root route (aka home page) points to a view
     // located at `views/home/index.ejs`
     // 

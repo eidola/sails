@@ -136,7 +136,17 @@ var releaseController = {
 	    processFiles(release, req.files);
 	    res.json(release);
 	});
-    }
+    },
+    "slug": function(req, res, next) {
+	var slug =  req.param('slug').toLowerCase();
+	if(slug.match(/\..+$/)) return next();
+	Release.findOneBySlug(slug).done(function(err, release) {
+	    if(err) throw err;
+	    if(!release) return next();
+	    res.view(release, 'release/show');
+	});
+    },
+
 };
 
 module.exports = releaseController;

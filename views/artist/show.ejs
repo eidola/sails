@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container artist">
   <div class="row">
     <div class="col-md-8">
       <h1><img src="<%= artist.image.thumbnail.url %>" class="img-circle" style="vertical-align: middle;" /><%= artist.name %></h1>  
@@ -7,13 +7,14 @@
 	<a href="/artist/edit/<%= artist.id %>" class="btn btn-primary">Edit</a>
       </div>
     </div>
-    <div class="col-md-4">
-      <h2>Releases</h2>
+    <div class="col-md-4 sidebar">
       <% _.each(releases, function(release) { %>
       <div class="row">
-	<img src="<%= release.cover.thumbnail.url %>" class="img-rounded"/>
-	<h3><%= release.title %></h3>
-      </div>
+	<a href="/release/<%= release.slug %>" class="release">
+	  <img src="<%= release.cover.main.url %>" class="img-rounded"/>
+	  <div class="title"><h3><%= release.title %></h3></div>
+	</div>
+      </a>
       <% }); %>
     </div>
   </div>

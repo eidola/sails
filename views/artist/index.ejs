@@ -1,6 +1,6 @@
 <div class="container">
   <% _.each(artists, function(artist) { %>
-  <div>  
+  <div class="col-md-4">  
     <a href="/artist/<%= artist.slug %>">
       <img src="<%= artist.image.main.url %>" class="img-rounded" />
       <h1><%= artist.name %></h1>
