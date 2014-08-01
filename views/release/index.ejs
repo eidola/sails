@@ -7,7 +7,7 @@
     </a>
     <h3><%= release.title %> | <% _.each(release.artists, function(artist) { %><a href="/artist/<%= artist %>"><%= artist %></a><% }) %></h3>
       <% for(format in release.formats) { %>
-      <button value="<%= release.formats[format].price %>"><%= format %></button>
+      <button class="btn" value="<%= release.formats[format].price %>" title="£<%= release.formats[format].price %>"><%= format %></button>
       <% } %>
   </li>
   <% }) %>

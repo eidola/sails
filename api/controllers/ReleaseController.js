@@ -1,5 +1,5 @@
 /**
- * ReleasesController
+ * ReleaseController
  *
  * @module      :: Controller
  * @description	:: A set of functions called `actions`.
@@ -99,7 +99,7 @@ var releaseController = {
 	return res.view();
     },
     index: function(req, res) {
-	Releases.find(function(err, releases) {
+	Release.find(function(err, releases) {
 	    if(err) throw err;
 	    return res.view({ releases: releases });
 	});
@@ -121,7 +121,7 @@ var releaseController = {
 	    
 	}
 	
-	Releases.create({
+	Release.create({
 	    title: title,
 	    artists: artists,
 	    cover:  {

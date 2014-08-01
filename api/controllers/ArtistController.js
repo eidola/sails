@@ -127,10 +127,15 @@ module.exports = {
     },
     "slug": function(req, res, next) {
 	var slug =  req.param('slug').toLowerCase();
-	if(slug.match(/\..+$/) || slug === 'new') return next();
+	if(slug.match(/\..+$/)) return next();
 	Artist.findOneBySlug(slug).done(function(err, artist) {
 	    if(err) throw err;
-	    res.view(artist, 'artist/show');
+	    if(!artist) return next();
+	    Release.find({ artists:{ contains: slug} }).done(function(err, releases) {
+		if(err) throw err;
+		console.log(releases);
+		res.view({artist: artist, releases:releases}, 'artist/show');
+	    });
 	});
     },
 
