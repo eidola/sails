@@ -1,0 +1,26 @@
+<div class="container">
+  <table class="table table-condensed">
+    <thead>
+      <tr>
+	<th></th>
+	<th>Title</th>
+	<th>Format</th>
+	<th>Quantity</th>
+	<th>Price</th>
+	<th>Sub-Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% _.each(basket, function(item) { %>
+      <tr>
+	<td><img src="<%= item.cover %>" class="img-rounded" width="100px"/></td>
+	<td><%= item.title %></td>
+	<td><%= item.format %></td>
+	<td><%= item.quantity %></td>
+	<td>£<%= item.price %></td>
+	<td>£<%= item.subtotal %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>

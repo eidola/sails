@@ -66,7 +66,15 @@ module.exports = {
     },
     "add": function(req, res) {
 	var basket;
-	basket = req.session.basket = req.session.basket || {};
+	
+	if(!req.session.hasOwnProperty('basket')) {
+	    req.session.basket = {};
+	    var now = new Date()
+	    req.session.cookie.expires = new Date().setTime(now.getTime() + (3600*1000));
+		
+	}
+	basket = req.session.basket;
+
 	var releaseId = req.param('id');
 	var quantity = req.param('quantity') || 1;
 	var format = req.param('format');
@@ -80,14 +88,27 @@ module.exports = {
 	    };
 	}
 	basket[releaseId].quantity += quantity;
+	
 	Release.findOne(releaseId).done(function(err, release) {
 	    if(err) throw err;
+	    basket = req.session.basket;
 	    var rf = release.formats[basket[release.id].format];
 	    if(rf.released === 'on') {
-		basket[release.id].price = rf.price;
+		var item = basket[release.id];
+		item.price = rf.price;
+		item.title = release.title;
+		item.cover = release.cover.thumbnail.url;
+		item.subtotal = item.price * item.quantity; 
+		res.json(basket);
 	    }
-	    console.log(req.session.basket);
+	    
 	}); 
+    },
+    "basket": function(req,res) {
+	
+	var basket = req.session.basket;
+	
+	res.view({basket: basket}, 'order/basket');
     },
 
 
