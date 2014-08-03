@@ -15,45 +15,57 @@
  * @docs        :: http://sailsjs.org/#!documentation/controllers
  */
 var paypal = require('paypal-rest-sdk');
-var payment = {
+
+var order = {
     "intent": "sale",
     "payer": {
 	"payment_method": "paypal"
     },
+    "transactions": [],
     "redirect_urls": {
-	"return_url": "http://www.eidolarecords.co.uk/execute",
-	"cancel_url": "http://www.eidolarecords.co.uk/cancel"
-    },
-    "transactions": [{ 
-
-	"item_list": {
-            "items": [{
-                "name": "It Never Entered My Mind",
-                "sku": "item",
-                "price": "15.00",
-                "currency": "GBP",
-                "quantity": 1
-            }]
-	},
-        
-	"amount": {
-	    "total": "20.00",
-	    "currency": "GBP",
-	    "details": {
-		"subtotal": "15.00",
-		"shipping": "5.00"
-	    }
-	},
-	"description": "It Never Entered My Mind"
-	
-    }]
-};
-
-
+	"return_url": "http://www.eidolarecords.co.uk/order/execute",
+	"cancel_url": "http://www.eidolarecords.co.uk/order/cancel"
+    }
+  
+}
 module.exports = {
-    "pay": function(req, res) {
+    "checkout": function(req, res) {
+	var items = [];
+	
+	var subtotal = 0;
+	var shipping = 0;
+	var total = 0;
+
+	_.each(req.session.basket, function(item) {
+	    items.push({
+		"name": item.title,
+                "sku": "item",
+                "price": item.price.toString(),
+                "currency": "GBP",
+                "quantity": item.quantity
+	    });
+	    subtotal += item.subtotal;
+	    shipping += item.quantity * 3;
+	});
+	total = subtotal + shipping;
+	
+	order.transactions.push({
+	    "item_list": {
+		"items": items
+	    },
+	    "amount": {
+		"total": total.toString(),
+		"currency": "GBP",
+		"details": {
+		    "subtotal": subtotal.toString(),
+		    "shipping": shipping.toString()
+		}
+	    },
+	    "description": "Eidola Records Order"
+	});
+	console.log(JSON.stringify(order));
 	paypal.configure(sails.config.paypal.api);
-	paypal.payment.create(payment, function(err, payment) {
+	paypal.payment.create(order, function(err, payment) {
 	    if(err) throw err;
 	    req.session.paymentId = payment.id;
 	    var redirect = _.findWhere(payment.links, { 'method': 'REDIRECT'});
@@ -68,7 +80,7 @@ module.exports = {
 	var basket;
 	
 	if(!req.session.hasOwnProperty('basket')) {
-	    req.session.basket = {};
+	    req.session.basket = [];
 	    var now = new Date()
 	    req.session.cookie.expires = new Date().setTime(now.getTime() + (3600*1000));
 		
@@ -81,34 +93,50 @@ module.exports = {
 	if(!(releaseId || format)) {
 	    return 400;
 	}
-	if(!basket.hasOwnProperty(releaseId)) {
-	    basket[releaseId] = {
-		"format": format,
-		"quantity": 0
-	    };
+
+	var item = _.findWhere(basket, { "id": releaseId, "format": format });
+	if(item) {
+	    item.quantity += quantity;
 	}
-	basket[releaseId].quantity += quantity;
-	
+	else {
+	    basket.push({ "id": releaseId, "format": format, "quantity": quantity });
+	}
 	Release.findOne(releaseId).done(function(err, release) {
 	    if(err) throw err;
 	    basket = req.session.basket;
-	    var rf = release.formats[basket[release.id].format];
-	    if(rf.released === 'on') {
-		var item = basket[release.id];
-		item.price = rf.price;
-		item.title = release.title;
-		item.cover = release.cover.thumbnail.url;
-		item.subtotal = item.price * item.quantity; 
-		res.json(basket);
-	    }
+	    var items = _.where(basket, {"id": release.id });
 	    
+	    _.each(items, function(item) {
+		console.log(item);
+		var rf = release.formats[item.format];
+		console.log(rf);
+		if(rf.released === 'on') {
+		    item.price = rf.price;
+		    item.title = release.title;
+		    item.cover = release.cover.thumbnail.url;
+		    item.subtotal = item.price * item.quantity;
+		    
+		    
+		}
+	    });
+	    res.json(basket);
 	}); 
+    },
+    "remove": function(req, res) {
+	var id = req.param('id');
+	var quantity = req.param('quantity') || 1
+	var format = req.param('format');
+	
     },
     "basket": function(req,res) {
 	
 	var basket = req.session.basket;
 	
 	res.view({basket: basket}, 'order/basket');
+    },
+    "empty": function(req, res){
+	req.session.basket = [];
+	res.json(req.session.basket);
     },
 
 
