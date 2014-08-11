@@ -26,7 +26,7 @@ module.exports = {
 	    res.redirect('/session/new');
 	    return;
 	}
-	User.findOneByEmail(req.param('email')).done(function(err, user) {
+	User.findOneByEmail(req.param('email')).exec(function(err, user) {
 	    if(err) throw err;
 	    if(!user) {
 		res.redirect('/session/new');

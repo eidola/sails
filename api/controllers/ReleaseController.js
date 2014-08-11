@@ -101,6 +101,7 @@ var releaseController = {
     index: function(req, res) {
 	Release.find(function(err, releases) {
 	    if(err) throw err;
+	    console.log(releases);
 	    return res.view({ releases: releases });
 	});
     },
@@ -131,7 +132,7 @@ var releaseController = {
 	    },
 	    formats: formats
 
-	}).done(function(err, release) {
+	}).exec(function(err, release) {
 	    if(err) throw err;
 	    processFiles(release, req.files);
 	    res.json(release);
@@ -140,7 +141,7 @@ var releaseController = {
     "slug": function(req, res, next) {
 	var slug =  req.param('slug').toLowerCase();
 	if(slug.match(/\..+$/)) return next();
-	Release.findOneBySlug(slug).done(function(err, release) {
+	Release.findOneBySlug(slug).exec(function(err, release) {
 	    if(err) throw err;
 	    if(!release) return next();
 	    res.view(release, 'release/show');

@@ -2,7 +2,9 @@
   <% _.each(artists, function(artist) { %>
   <div class="col-md-4">  
     <a href="/artist/<%= artist.slug %>">
+      <% if(artist.image) { %>
       <img src="<%= artist.image.main.url %>" class="img-rounded" />
+      <% } %>
       <h1><%= artist.name %></h1>
     </a>
   </div>

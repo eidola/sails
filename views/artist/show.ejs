@@ -1,7 +1,7 @@
 <div class="container artist">
   <div class="row">
     <div class="col-md-8">
-      <h1><img src="<%= artist.image.thumbnail.url %>" class="img-circle" style="vertical-align: middle;" /><%= artist.name %></h1>  
+      <h1><% if(artist.image) { %><img src="<%= artist.image.thumbnail.url %>" class="img-circle" style="vertical-align: middle;" /><% } %><%= artist.name %></h1>  
       <div style="font-family: 'Fanwood Text'; font-size: 16px; margin-left: 212px; margin-top: -80px"><%- artist.description_html %></div>
       <div>
 	<a href="/artist/edit/<%= artist.id %>" class="btn btn-primary">Edit</a>

@@ -15,125 +15,66 @@
  * @docs        :: http://sailsjs.org/#!documentation/controllers
  */
 
-var fs = require('fs');
-var im = require('imagemagick-native');
-var mkdirp = require('mkdirp');
-var path = require('path');
-
-var assets = "/home/james/Projects/Eidola Records/WWW/sails/eidolarecords/assets/";
-var sizes = {
-    thumbnail: 200,
-    main: 300
-};
-function resizeImage(artist, fpath) {
-    var ext = path.extname(fpath);
-    var basename = path.basename(fpath);
-    var buffer = fs.readFileSync(fpath);
-    for(size in sizes) {
-	if(sizes.hasOwnProperty(size)) {
-	    var dim = sizes[size];
-	    var image = im.convert({
-		srcData: buffer,
-		width: dim,
-		height: dim,
-		resizeStyle: "aspectfill",
-		quality: 80
-	    });
-	    var dst = fpath.replace(basename, size+ext);
-	    fs.writeFile(dst, image, function(err) {
-		if(err) throw err;
-	    });
-
-	    if(!artist.image.hasOwnProperty(size)) {
-		artist.image[size] = {};
-	    }
-	    artist.image[size] = {
-		path: dst,
-		url: dst.replace(assets, '/')
-	    }
-	}
-    }
-    artist.save(function(err){
-	if(err) throw err;
-	console.log("artist: %s - updated", artist.id);
-    });
-}
-function ensureExists(path, mask, cb) {
-    if (typeof mask == 'function') { // allow the `mask` parameter to be optional
-        cb = mask;
-        mask = 0777;
-    }
-    fs.mkdir(path, mask, function(err) {
-        if (err) {
-            if (err.code == 'EEXIST') cb(null); // ignore the error if the folder already exists
-            else cb(err); // something else went wrong
-        } else cb(null); // successfully created folder
-    });
-}
-function processFiles(artist, files) {
-    if(files.hasOwnProperty('image')) {
-	var image = files.image;
-	var src = image.path;
-	var name = image.originalFilename;
-	
-	fs.readFile(src, function (err, data) {
-	    var newPath = assets + 'images/' + artist.name + '/photos';
-	    mkdirp(newPath, function(err){
-		var dest = newPath + '/' + name;
-		fs.writeFile(dest, data, function (err) {
-		    if(err) throw err;
-		    if(!artist.hasOwnProperty('image')) {
-			artist.image = {};
-		    }
-		    artist.image.original = {
-			path: dest,
-			url: dest.replace(assets, '/')
-		    };
-		    resizeImage(artist, dest);
-		});
-	    });
-	});
-    }
-}
-
 module.exports = {
     "new": function(req, res) {
 	res.view();
     },
     "create": function(req, res) {
-	Artist.create(req.params.all(), function(err, artist) {
+	
+	var params = _.extend({}, req.params.all());
+	console.log(req.files);
+	_.each(req.files, function(file) {
+	    console.log(file);
+	    file.upload(function(err, files) {
+		if(err) throw err;
+		console.log(files);
+	    });
+	});
+	
+	Artist.create(params, function(err, artist) {
 	    if(err) throw err;
-	    processFiles(artist, req.files);
 	    res.redirect('/artist/'+artist.slug);
 	});
     },
     "edit": function(req, res) {
-	Artist.findOne(req.params.id).done(function(err, artist) {
+	Artist.findOne(req.params.id).exec(function(err, artist) {
 	    if(err) throw err;
 	    res.view(artist);
+	});
+    },
+    "update": function(req,res) {
+	Artist.update(req.params.id, req.params.all(), function(err, artist) {
+	    if(err) throw err;
+	    if(artist) {
+		processFiles(artist, req.files);
+	    }
+	    res.redirect('/artist/'+artist.slug);
 	});
     },
     "index": function(req, res) {
 	Artist.find(function(err, artists) {
 	    if(err) throw err;
+	    console.log(artists);
 	    res.view({ artists: artists });
 	});
     },
     "show": function(req, res) {
-	Artist.findOne(req.params.id).done(function(err, artist) {
+
+	Artist.findOne(req.params.id).exec(function(err, artist) {
 	    if(err) throw err;
 	    res.view(artist);
 	});
     },
     "slug": function(req, res, next) {
+
 	var slug =  req.param('slug').toLowerCase();
 	if(slug.match(/\..+$/)) return next();
-	Artist.findOneBySlug(slug).done(function(err, artist) {
+	Artist.findOneBySlug(slug).exec(function(err, artist) {
 	    if(err) throw err;
 	    if(!artist) return next();
-	    Release.find({ artists:{ contains: slug} }).done(function(err, releases) {
+	    console.log(artist);
+	    Release.find({ artists:{ contains: slug} }).exec(function(err, releases) {
 		if(err) throw err;
-		console.log(releases);
 		res.view({artist: artist, releases:releases}, 'artist/show');
 	    });
 	});
