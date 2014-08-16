@@ -23,8 +23,7 @@ var Release = {
 	    type: 'STRING'
 	},
 	cover: {
-	    type: 'JSON',
-	    required: true
+	    type: 'JSON'
 	},
 	tracks: {
 	    type: 'ARRAY'

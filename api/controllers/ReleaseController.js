@@ -14,86 +14,9 @@
  *
  * @docs        :: http://sailsjs.org/#!documentation/controllers
  */
-var fs = require('fs');
-var im = require('imagemagick-native');
-var mkdirp = require('mkdirp');
-var path = require('path');
+var uuid = require('node-uuid'),
+path = require('path');
 
-var assets = "/home/james/Projects/Eidola Records/WWW/sails/eidolarecords/assets/";
-var sizes = {
-    thumbnail: 200,
-    main: 300
-};
-
-function resizeImage(release, fpath) {
-    var ext = path.extname(fpath);
-    var basename = path.basename(fpath);
-    var buffer = fs.readFileSync(fpath);
-    for(size in sizes) {
-	if(sizes.hasOwnProperty(size)) {
-	    var dim = sizes[size];
-	    var image = im.convert({
-		srcData: buffer,
-		width: dim,
-		height: dim,
-		resizeStyle: "aspectfill",
-		quality: 80
-	    });
-	    var dst = fpath.replace(basename, size+ext);
-	    fs.writeFile(dst, image, function(err) {
-		if(err) throw err;
-	    });
-
-	    if(!release.cover.hasOwnProperty(size)) {
-		release.cover[size] = {};
-	    }
-	    release.cover[size] = {
-		path: dst,
-		url: dst.replace(assets, '/')
-	    }
-	}
-    }
-    release.save(function(err){
-	if(err) throw err;
-	console.log("Release: %s - updated", release.id);
-    });
-}
-
-function ensureExists(path, mask, cb) {
-    if (typeof mask == 'function') { // allow the `mask` parameter to be optional
-        cb = mask;
-        mask = 0777;
-    }
-    fs.mkdir(path, mask, function(err) {
-        if (err) {
-            if (err.code == 'EEXIST') cb(null); // ignore the error if the folder already exists
-            else cb(err); // something else went wrong
-        } else cb(null); // successfully created folder
-    });
-}
-
-function processFiles(release, files) {
-    if(files.hasOwnProperty('cover')) {
-	var cover = files.cover;
-	var src = cover.path;
-	var name = cover.originalFilename;
-	
-	fs.readFile(src, function (err, data) {
-	    var newPath = assets + 'images/' + release.id + '/covers';
-	    mkdirp(newPath, function(err){
-		var dest = newPath + '/' + name;
-		fs.writeFile(dest, data, function (err) {
-		    if(err) throw err;
-		    release.cover.original = {
-			path: dest,
-			url: dest.replace(assets, '/')
-		    };
-		    resizeImage(release, dest);
-		});
-	    });
-	});
-    }
-}
 var releaseController = {
     new: function(req, res) {
 	return res.view();
@@ -107,35 +30,52 @@ var releaseController = {
     },
     create: function(req, res) {
 
-	var artists = req.body.artists || null;
-	if(artists !== null) {
-	    artists = artists.split(';');
+	var params = req.params.all();
+	if(params.artists !== null) {
+	    params.artists = params.artists.split(';');
 	}
 
-	var title = req.body.title || null;
-	var formats = req.body.formats || null;
 	var format;
+	var formats = params.formats;
 	for(format in formats) {
-	    if(!formats[format]['released']) {
-		delete formats[format];
+	    if(!params.formats[format]['released']) {
+		delete params.formats[format];
 	    }
 	    
 	}
 	
-	Release.create({
-	    title: title,
-	    artists: artists,
-	    cover:  {
-		thumbnail: {},
-		original: {},
-		main: {}
-	    },
-	    formats: formats
-
-	}).exec(function(err, release) {
+	Release.create(params).exec(function(err, release) {
 	    if(err) throw err;
-	    processFiles(release, req.files);
-	    res.json(release);
+
+	    streamOptions = {
+		model: release,
+		dirname: sails.config.appPath + "/assets/images/"+ release.title +"/",
+		saveAs: function(file) {
+		    var filename = file.filename,
+                    newName = uuid.v4() + path.extname(filename);
+		    return newName;
+		},
+		completed: function(fileData, model, next) {
+		    fileData.url = fileData.path.replace(sails.config.appPath + "/assets", "");
+		    model.images.original = fileData;
+		    
+		    model.save(function(err){
+			if(err) throw err;
+		    });
+		    ImageService.resizeImage(
+			fileData.path, 
+			sails.config.appPath + "/assets/images/" + model.title + "/",
+			model,
+			"cover",
+			{}
+		    );
+		}
+            };
+	    req.file('cover').upload(
+		uploader.documentReceiverStream(streamOptions), 
+		function(err, files) {
+		    if(err) return res.serverError(err);
+		});
 	});
     },
     "slug": function(req, res, next) {
@@ -144,7 +84,7 @@ var releaseController = {
 	Release.findOneBySlug(slug).exec(function(err, release) {
 	    if(err) throw err;
 	    if(!release) return next();
-	    res.view(release, 'release/show');
+	    res.view('release/show', release);
 	});
     },
 

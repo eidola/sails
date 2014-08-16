@@ -5,6 +5,7 @@
     </div>
     <div class="panel-body">
       <form action="create" enctype="multipart/form-data" method="post" role="form">
+	<input type="hidden" name="_csrf" value="<%= _csrf %>"/>
 	<div class="form-group">
 	  <label>Title: </label>
 	  <input type="text" name="title" class="form-control"/>
@@ -42,7 +43,6 @@
 	    <input type="text" name="formats[vinyl][price]" class="form-control"/>
 	  </div>
 	</div>
-	<input type="hidden" name="_csrf" value="<%= _csrf %>"/>
 	<button type="submit" class="btn btn-default">Submit</button>
       </form>
     </div>

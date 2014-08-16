@@ -37,8 +37,6 @@ module.exports = {
 		    return newName;
 		},
 		completed: function(fileData, model, next) {
-		    console.log(fileData);
-		    console.log(model);
 		    fileData.url = fileData.path.replace(sails.config.appPath + "/assets", "");
 		    model.images.original = fileData;
 		    
@@ -62,9 +60,7 @@ module.exports = {
 			files:results
 		    });
 		});
-	    
-	    
-	    res.redirect('/artist/'+artist.slug);
+	    res.redirect('/artist/' + artist.slug);
 	});
     },
     "edit": function(req, res) {
@@ -101,14 +97,12 @@ module.exports = {
 	
     },
     "show": function(req, res) {
-
 	Artist.findOne(req.params.id).exec(function(err, artist) {
 	    if(err) throw err;
 	    res.view(artist);
 	});
     },
     "slug": function(req, res, next) {
-
 	var slug =  req.param('slug').toLowerCase();
 	if(slug.match(/\..+$/)) return next();
 	Artist.findOneBySlug(slug).exec(function(err, artist) {
@@ -126,6 +120,4 @@ module.exports = {
      * (specific to ArtistController)
      */
     _config: {}
-
-    
 };

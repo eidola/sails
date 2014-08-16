@@ -2,7 +2,7 @@
   <ul class="releases">
     <% _.each(releases, function (release) {  %>
     <li class="release" id="<%= release.id %>">
-      <a href="/releases/<%= release.id %>"> 
+      <a href="/release/<%= release.slug %>"> 
 	<img src="<%= release.cover.main.url %>"/>
       </a>
       <h3><%= release.title %> | <% _.each(release.artists, function(artist) { %><a href="/artist/<%= artist %>"><%= artist %></a><% }) %></h3>
