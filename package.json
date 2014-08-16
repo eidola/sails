@@ -9,6 +9,8 @@
     "ejs": "0.8.4",
     "grunt": "0.4.1",
     "markdown": "^0.5.0",
+    "marked": "^0.3.2",
+    "node-uuid": "^1.4.1",
     "optimist": "0.3.4",
     "paypal-rest-sdk": "^0.10.0",
     "sails": "^0.10.0-rc11",

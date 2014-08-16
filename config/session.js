@@ -35,7 +35,7 @@ module.exports.session = {
 
 
   // Uncomment the following lines to use your Mongo adapter as a session store
-   adapter: 'mongo',
+   connections: 'mongo',
   //
    host: 'localhost',
    port: 27017,

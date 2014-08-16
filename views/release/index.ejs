@@ -1,13 +1,17 @@
-<div>
+<div class="container">
   <ul class="releases">
     <% _.each(releases, function (release) {  %>
     <li class="release" id="<%= release.id %>">
-      <a href="/releases/<%= release.slug %>"> 
+      <a href="/releases/<%= release.id %>"> 
 	<img src="<%= release.cover.main.url %>"/>
       </a>
       <h3><%= release.title %> | <% _.each(release.artists, function(artist) { %><a href="/artist/<%= artist %>"><%= artist %></a><% }) %></h3>
+      Available formats: 
       <% for(format in release.formats) { %>
-      <button class="btn add-to-basket" name="<%= release.id %>" value="<%= format %>" title="£<%= release.formats[format].price %>"><%= format %></button>
+      <button class="btn add-to-basket" 
+	      name="<%= release.id %>" 
+	      value="<%= format %>" 
+	      title="£<%= release.formats[format].price %>"><%= format %></button>
       <% } %>
     </li>
     <% }) %>

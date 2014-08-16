@@ -1,0 +1,24 @@
+<div class="container">
+  <h3>Artists</h3>
+  <table class="table table-condensed table-hover">
+    <thead>
+      <tr>
+	<td>ID</td>
+	<td>Name</td>
+	<td></td>
+      </tr>
+    </thead>
+    <tbody>
+      <% _.each(artists, function (artist) {  %>
+      <tr>
+	<td><%= artist.id %></td>
+	<td><%= artist.name %></td>
+	<td>
+	  <a href="/artist/<%= artist.id %>" class="btn btn-primary">Show</a>
+	  <a href="/artist/edit/<%= artist.id %>" class="btn btn-warning">Edit</a>
+	  <a href="/artist/destroy/<%= artist.id %>" class="btn btn-danger">Delete</a>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

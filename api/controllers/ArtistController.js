@@ -14,6 +14,8 @@
  *
  * @docs        :: http://sailsjs.org/#!documentation/controllers
  */
+var uuid = require('node-uuid'),
+path = require('path');
 
 module.exports = {
     "new": function(req, res) {
@@ -21,34 +23,61 @@ module.exports = {
     },
     "create": function(req, res) {
 	
-	var params = _.extend({}, req.params.all());
-	console.log(req.files);
-	_.each(req.files, function(file) {
-	    console.log(file);
-	    file.upload(function(err, files) {
-		if(err) throw err;
-		console.log(files);
-	    });
-	});
-	
+	var params = req.params.all();
 	Artist.create(params, function(err, artist) {
 	    if(err) throw err;
+	    
+	    var results = [],
+            streamOptions = {
+		model: artist,
+		dirname: sails.config.appPath + "/assets/images/"+ artist.name +"/",
+		saveAs: function(file) {
+		    var filename = file.filename,
+                    newName = uuid.v4() + path.extname(filename);
+		    return newName;
+		},
+		completed: function(fileData, model, next) {
+		    console.log(fileData);
+		    console.log(model);
+		    fileData.url = fileData.path.replace(sails.config.appPath + "/assets", "");
+		    model.images.original = fileData;
+		    
+		    model.save(function(err){
+			if(err) throw err;
+		    });
+		    ImageService.resizeImage(
+			fileData.path, 
+			sails.config.appPath + "/assets/images/" + model.name + "/",
+			model,
+			"images",
+			{}
+		    );
+		}
+            };
+	    req.file('image').upload(
+		uploader.documentReceiverStream(streamOptions), 
+		function(err, files) {
+		    if(err) return res.serverError(err);
+		    res.json({
+			files:results
+		    });
+		});
+	    
+	    
 	    res.redirect('/artist/'+artist.slug);
 	});
     },
     "edit": function(req, res) {
 	Artist.findOne(req.params.id).exec(function(err, artist) {
 	    if(err) throw err;
+	    console.log(artist);
 	    res.view(artist);
 	});
     },
     "update": function(req,res) {
 	Artist.update(req.params.id, req.params.all(), function(err, artist) {
 	    if(err) throw err;
-	    if(artist) {
-		processFiles(artist, req.files);
-	    }
-	    res.redirect('/artist/'+artist.slug);
+	    res.redirect('/artist/' + artist.name);
 	});
     },
     "index": function(req, res) {
@@ -57,6 +86,19 @@ module.exports = {
 	    console.log(artists);
 	    res.view({ artists: artists });
 	});
+    },
+    "admin": function(req, res) {
+	Artist.find(function(err, artists) {
+	    if(err) throw err;
+	    res.view({ artists: artists });
+	});
+    },
+    "destroy": function(req, res) {
+	Artist.destroy(req.params.id, function(err, status) {
+	    if(err) throw err;
+	    res.redirect('/artist/admin');
+	});
+	
     },
     "show": function(req, res) {
 
@@ -72,10 +114,9 @@ module.exports = {
 	Artist.findOneBySlug(slug).exec(function(err, artist) {
 	    if(err) throw err;
 	    if(!artist) return next();
-	    console.log(artist);
 	    Release.find({ artists:{ contains: slug} }).exec(function(err, releases) {
 		if(err) throw err;
-		res.view({artist: artist, releases:releases}, 'artist/show');
+		res.view('artist/show', {artist: artist, releases:releases});
 	    });
 	});
     },
